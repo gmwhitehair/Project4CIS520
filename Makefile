@@ -18,7 +18,7 @@ CC        = mpicc
 #
 
 PROGRAM   = hello			# name of the binary
-SRCS      = MPI_C_SAMPLE.c		# source file
+SRCS      = pt1.c		# source file
 OBJS      = $(SRCS:.c=.o)		# object file
 
 #

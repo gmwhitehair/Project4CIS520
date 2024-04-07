@@ -7,7 +7,12 @@
 #define LINE_COUNT 1000000
 pthread_mutex_t mutexsum;			// mutex for char_counts
 int max_char[LINE_COUNT];			// count of individual characters
-
+struct thread_args {
+    char *file_path;
+    int start_pos;
+    int end_pos;
+    long thread_id;
+};
 int max_ascii_value(char *line) {
     int max_value = 0;
     while (*line) {
@@ -19,35 +24,27 @@ int max_ascii_value(char *line) {
     return max_value;
 }
 
-void *count_array(void *myID){
+void *count_array(void *arg){
     FILE *file;
-    int i;
     char line[1000000]; // Max line length
+    struct thread_args *t_args = (struct thread_args *) arg;
 
-    char *file_path = "/homes/dan/625/wiki_dump.txt"; 
-    int startPos = ((long) myID) * (LINE_COUNT / NUM_THREADS);
-    int endPos = startPos + (LINE_COUNT / NUM_THREADS);
+    printf("myID = %ld startPos = %d endPos = %d \n", t_args->thread_id, t_args->start_pos, t_args->end_pos);
 
-    printf("myID = %ld startPos = %d endPos = %d \n", (long) myID, startPos, endPos);
-
-    file = fopen(file_path, "r");
+    file = fopen(t_args->file_path, "r");
     if (file == NULL) {
-        printf("Error opening file in thread: %ld \n", (long) myID);
+        printf("Error opening file in thread: %ld \n", (long) t_args->thread_id);
         return NULL;
     }
 
-    for (i = 0; i < startPos; i++) {
-        if (fgets(line, LINE_COUNT, file) == NULL) {
-            printf("Error: startPos exceeds number of lines in file. Thread: %ld \n", (long) myID);
-            fclose(file);
-            return NULL;
-        }
-    }
+    fseek(file, t_args->start_pos * sizeof(char), SEEK_SET);
+
 
     pthread_mutex_lock (&mutexsum);
     // Read lines until reaching endPos or end of file
-    int line_number = startPos;
-    while (fgets(line, LINE_COUNT, file) != NULL && line_number < endPos) {
+    int line_number = t_args->start_pos;
+	int end_pos = t_args->end_pos;
+    while (fgets(line, LINE_COUNT, file) != NULL && line_number < end_pos) {
         max_char[line_number] = max_ascii_value(line);
         line_number++;
     }
@@ -76,8 +73,9 @@ void print_results()
 
 int main() {
     //FILE *file;
-    //char *file_path = "/homes/dan/625/wiki_dump.txt"; 
+    char *file_path = "/homes/dan/625/wiki_dump.txt"; 
     pthread_t threads[NUM_THREADS];
+	struct thread_args t_args[NUM_THREADS];
 	pthread_attr_t attr;
 	void *status;
 	int i, rc;
@@ -87,12 +85,16 @@ int main() {
 	init_arrays();
 
     for (i = 0; i < NUM_THREADS; i++ ) {
-	      rc = pthread_create(&threads[i], &attr, count_array, (void *)(long)i);
-	      if (rc) {
-	        printf("ERROR; return code from pthread_create() is %d\n", rc);
-		exit(-1);
-	      }
-	}
+		t_args[i].file_path = file_path;
+		t_args[i].start_pos = i * (LINE_COUNT / NUM_THREADS);
+		t_args[i].end_pos = (i == NUM_THREADS - 1)? LINE_COUNT : (i + 1) * (LINE_COUNT / NUM_THREADS);
+		t_args[i].thread_id = i;
+        rc = pthread_create(&threads[i], &attr, count_array, &t_args[i]);
+		if (rc) {
+			printf("ERROR; return code from pthread_create() is %d\n", rc);
+			exit(-1);
+		}
+}
 
 	/* Free attribute and wait for the other threads */
 	pthread_attr_destroy(&attr);

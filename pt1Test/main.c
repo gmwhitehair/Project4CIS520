@@ -49,7 +49,6 @@ void *count_array(void *myID)
   char theChar;
   int i, j, charLoc;
   int local_char_count[ALPHABET_SIZE];
-
   int startPos = ((int) myID) * (ARRAY_SIZE / NUM_THREADS);
   int endPos = startPos + (ARRAY_SIZE / NUM_THREADS);
 
