@@ -16,6 +16,19 @@ float find_avg(char* line, int nchars) {
 	return 0.0;
 }
 
+int max_ascii_value(char *line) {
+    int max_value = 0;
+    while (*line) {
+        if ((int)*line > max_value) {
+            max_value = (int)*line;
+        }
+        line++;
+    }
+    return max_value;
+}
+
+
+
 int main()
 {
    int nlines = 0, maxlines = 100;
