@@ -1,4 +1,4 @@
 build/
 .out
 job_script.sh
-max_ascii_values
+max_ascii_values.txt
