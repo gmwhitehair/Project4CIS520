@@ -22,7 +22,7 @@ int max_ascii_value(char *line) {
 void *count_array(void *myID){
     FILE *file;
     int i;
-    char line[1000000]; // Max line length
+    char line[LINE_COUNT]; // Max line length
 
     char *file_path = "/homes/dan/625/wiki_dump.txt"; 
     int startPos = ((long) myID) * (LINE_COUNT / NUM_THREADS);
