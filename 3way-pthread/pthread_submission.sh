@@ -19,7 +19,8 @@ EOF
 chmod u+x job_script.sh
 
 # Submit the batch script using sbatch
-for i in 1 5 10 15 20
+for i in 1 5 10 20
 do
-sbatch --constraint=moles --time=02:00:00 --mem-per-cpu=$((20/$i))G --cpus-per-task=$i --ntasks=1 --nodes=1 ./job_script.sh
+
+    sbatch --constraint=moles --time=02:00:00 --mem-per-cpu=$((20/$i))G --cpus-per-task=$i --ntasks=1 --nodes=1 ./job_script.sh
 done
