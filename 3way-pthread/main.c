@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define NUM_THREADS 20
-#define LINE_COUNT 250000
+#define LINE_COUNT 1000000
 pthread_mutex_t mutexsum;			// mutex for char_counts
 int max_char[LINE_COUNT];			// count of individual characters
 

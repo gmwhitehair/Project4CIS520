@@ -3,7 +3,7 @@
 #include <string.h>
 #include <omp.h>
 
-#define LINE_COUNT 250000
+#define LINE_COUNT 1000000
 
 int max_char[LINE_COUNT]; // count of individual characters
 

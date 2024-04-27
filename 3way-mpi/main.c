@@ -3,7 +3,7 @@
 #include <string.h>
 #include "mpi.h"
 
-#define LINE_COUNT 750000
+#define LINE_COUNT 1000000
 
 int max_char[LINE_COUNT]; // count of individual characters
 
