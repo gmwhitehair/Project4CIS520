@@ -18,6 +18,6 @@ mpirun -n $i ./omp_max_ascii_values
 
 EOF
 
-chmod u+x mpi_job_script.sh
-    sbatch --constraint=moles --time=02:00:00 --mem-per-cpu=1G --cpus-per-task=1 --ntasks-per-node=$i --nodes=1 ./mpi_job_script.sh
+chmod u+x omp_job_script.sh
+    sbatch --constraint=moles --time=02:00:00 --mem-per-cpu=1G --cpus-per-task=1 --ntasks-per-node=$i --nodes=1 ./omp_job_script.sh
 done

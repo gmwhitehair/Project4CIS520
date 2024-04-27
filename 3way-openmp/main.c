@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mpi.h"
-#include <omp.h> // Include OpenMP header
+#include <omp.h>
 
-#define LINE_COUNT 1000000
+#define LINE_COUNT 10000
 
 int max_char[LINE_COUNT]; // count of individual characters
 
@@ -27,50 +26,39 @@ void count_array(int startPos, int endPos) {
     file = fopen(file_path, "r");
     if (file == NULL) {
         printf("Error opening file.\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(1);
     }
     for (i = 0; i < startPos; i++) {
         if (fgets(line, LINE_COUNT, file) == NULL) {
             printf("Error: startPos exceeds number of lines in file.\n");
             fclose(file);
-            MPI_Abort(MPI_COMM_WORLD, 1);
+            exit(1);
         }
     }
-
     int line_number = startPos;
-    #pragma omp parallel for // OpenMP parallelization
-    for (i = startPos; i < endPos; i++) {
-        if (fgets(line, LINE_COUNT, file) == NULL) {
-            printf("Error reading line from file.\n");
-            fclose(file);
-            MPI_Abort(MPI_COMM_WORLD, 1);
+    #pragma omp parallel for shared(max_char) private(line_number, line) schedule(static)
+    for (line_number = startPos; line_number < endPos; line_number++) {
+        if (fgets(line, LINE_COUNT, file) != NULL) {
+            max_char[line_number] = max_ascii_value(line);
         }
-        max_char[line_number] = max_ascii_value(line);
-        line_number++;
     }
     fclose(file);
 }
 
-int main(int argc, char *argv[]) {
-    int rank, size, startPos, endPos, i;
+int main() {
+    int startPos, endPos, i;
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    //printf("Number of threads: %d\n", size);
-    startPos = rank * (LINE_COUNT / size);
-    endPos = (rank + 1) * (LINE_COUNT / size);
+    startPos = 0;
+    endPos = LINE_COUNT;
 
-    count_array(startPos, endPos);
-
-    MPI_Allreduce(MPI_IN_PLACE, max_char, LINE_COUNT, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-    if (rank == 0) {
-        for (i = 0; i < LINE_COUNT; i++) {
-            printf("%d: %d\n", i, max_char[i]);
-        }
+    #pragma omp parallel
+    {
+        count_array(startPos, endPos);
     }
 
-    MPI_Finalize();
+    for (i = 0; i < LINE_COUNT; i++) {
+        printf("%d: %d\n", i, max_char[i]);
+    }
+
     return 0;
 }
