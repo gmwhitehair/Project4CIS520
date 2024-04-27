@@ -3,7 +3,7 @@
 #include <string.h>
 #include <omp.h>
 
-#define LINE_COUNT 500000
+#define LINE_COUNT 250000
 
 int max_char[LINE_COUNT]; // count of individual characters
 
@@ -35,8 +35,7 @@ void count_array(int startPos, int endPos) {
             exit(1);
         }
     }
-    int line_number = startPos;
-    #pragma omp parallel for shared(max_char) private(line_number, line) schedule(static)
+    int line_number;
     for (line_number = startPos; line_number < endPos; line_number++) {
         if (fgets(line, LINE_COUNT, file) != NULL) {
             max_char[line_number] = max_ascii_value(line);
@@ -46,13 +45,16 @@ void count_array(int startPos, int endPos) {
 }
 
 int main() {
-    int startPos, endPos, i;
-
-    startPos = 0;
-    endPos = LINE_COUNT;
+    int i;
 
     #pragma omp parallel
     {
+        int numThreads = omp_get_num_threads();
+        int threadID = omp_get_thread_num();
+        int linesPerThread = LINE_COUNT / numThreads;
+        int startPos = threadID * linesPerThread;
+        int endPos = (threadID == numThreads - 1) ? LINE_COUNT : startPos + linesPerThread;
+
         count_array(startPos, endPos);
     }
 
