@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mpi.h"
+#include <omp.h> // Include OpenMP header
 
 #define LINE_COUNT 1000000
 
@@ -35,8 +36,15 @@ void count_array(int startPos, int endPos) {
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
     }
+
     int line_number = startPos;
-    while (fgets(line, LINE_COUNT, file) != NULL && line_number < endPos) {
+    #pragma omp parallel for // OpenMP parallelization
+    for (i = startPos; i < endPos; i++) {
+        if (fgets(line, LINE_COUNT, file) == NULL) {
+            printf("Error reading line from file.\n");
+            fclose(file);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
         max_char[line_number] = max_ascii_value(line);
         line_number++;
     }

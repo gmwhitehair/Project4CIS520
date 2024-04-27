@@ -10,10 +10,10 @@ make
 # Submit the batch script using sbatch
 for i in 1 5 10 20
 do
-cat <<EOF > mpi_job_script.sh
+cat <<EOF > omp_job_script.sh
 #!/bin/sh
 
-mpirun -n $i ./mpi_max_ascii_values
+mpirun -n $i ./omp_max_ascii_values
 
 
 EOF
