@@ -1,11 +1,11 @@
-#include <pthread.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define NUM_THREADS 20
-#define LINE_COUNT 250000
-pthread_mutex_t mutexsum;			// mutex for char_counts
+#define NUM_THREADS 4
+#define LINE_COUNT 1000000
+//pthread_mutex_t mutexsum;			// mutex for char_counts
 int max_char[LINE_COUNT];			// count of individual characters
 
 int max_ascii_value(char *line) {
@@ -24,6 +24,7 @@ void *count_array(void *myID){
     int i;
     char line[LINE_COUNT]; // Max line length
     char *file_path = "/homes/dan/625/wiki_dump.txt"; 
+    
     int startPos = ((long) myID) * (LINE_COUNT / NUM_THREADS);
     int endPos = startPos + (LINE_COUNT / NUM_THREADS); //printf("myID = %ld startPos = %d endPos = %d \n", (long) myID, startPos, endPos);
     file = fopen(file_path, "r");
@@ -38,20 +39,20 @@ void *count_array(void *myID){
             return NULL;
         }
     }
-    pthread_mutex_lock (&mutexsum);
+    //pthread_mutex_lock (&mutexsum);
     int line_number = startPos;
     while (fgets(line, LINE_COUNT, file) != NULL && line_number < endPos) {
         max_char[line_number] = max_ascii_value(line);
         line_number++;
     }
-    pthread_mutex_unlock (&mutexsum);
-    pthread_exit(NULL);
+   // pthread_mutex_unlock (&mutexsum);
+    //pthread_exit(NULL);
 }
 
 void init_arrays()
 {
     int i;
-    pthread_mutex_init(&mutexsum, NULL);
+   // pthread_mutex_init(&mutexsum, NULL);
     for (i = 0; i < LINE_COUNT; i++ ) {
     max_char[i] = 0;
     }
@@ -65,42 +66,39 @@ void print_results()
     }
 }
 
-int main() {
-    //FILE *file;
-    //char *file_path = "/homes/dan/625/wiki_dump.txt"; 
-    pthread_t threads[NUM_THREADS];
-	pthread_attr_t attr;
-	void *status;
-	int i, rc;
+int main(int argc, char* argv[]) {
+    int i, rc;
+	int numtasks, rank;
+	MPI_Status Status;
 
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	init_arrays();
 
-    for (i = 0; i < NUM_THREADS; i++ ) {
-	      rc = pthread_create(&threads[i], &attr, count_array, (void *)(long)i);
-	      if (rc) {
-	        printf("ERROR; return code from pthread_create() is %d\n", rc);
-		exit(-1);
-	      }
+	rc = MPI_Init(&argc,&argv);
+	if (rc != MPI_SUCCESS) {
+	    printf ("Error starting MPI program. Terminating.\n");
+        MPI_Abort(MPI_COMM_WORLD, rc);
+    }
+
+    MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+	//NUM_THREADS = numtasks;
+	printf("size = %d rank = %d\n", numtasks, rank);
+	fflush(stdout);
+
+	if ( rank == 0 ) {
+		init_arrays();
+	}
+	MPI_Bcast(max_char, LINE_COUNT, MPI_CHAR, 0, MPI_COMM_WORLD);
+		
+	count_array(&rank);
+
+	MPI_Reduce(max_char, LINE_COUNT, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+
+	if ( rank == 0 ) {
+		print_results();
 	}
 
-	/* Free attribute and wait for the other threads */
-	pthread_attr_destroy(&attr);
-	for(i=0; i<NUM_THREADS; i++) {
-	     rc = pthread_join(threads[i], &status);
-	     if (rc) {
-		   printf("ERROR; return code from pthread_join() is %d\n", rc);
-		   exit(-1);
-	     }
-	}
-
-	print_results();
-    //printf("Done!");
-	pthread_mutex_destroy(&mutexsum);
-	//printf("********************\n");
-    //printf("THREADED VERSION.\n");
-	//printf("Main: program completed. Exiting.\n");
-	pthread_exit(NULL);
+	MPI_Finalize();
 	return 0;
 }
