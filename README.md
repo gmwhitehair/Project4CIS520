@@ -2,7 +2,7 @@ All three of our implementations sit within respective folders. Here are the com
 
 Right now the number of lines read in from the file is set at 1,000,000 for each implementation.
 
-For PThreads the number of threads is set at 20. It can be altered under the LINE_COUNT variable at the top of main.c in ./3way-pthread
+For PThreads the number of threads is set at 20. It can be altered under the LINE_COUNT variable at the top of main.c
 
 MPI and OpenMP iterate through 1, 5, 10, and 20 threads. This cannot be altered.
 
