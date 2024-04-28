@@ -19,6 +19,7 @@ EOF
 chmod u+x job_script.sh
 
 # Submit the batch script using sbatch
+#Code gives a different number of cpus per task across different number of threads, also gives more cpu if less total cpus being used
 for i in 1 5 10 20
 do
 
